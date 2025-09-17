@@ -39,7 +39,7 @@
   <p align="center">
      <b>FO</b>rming semantic identifie<b>R</b>s for <b>G</b>enerative retri<b>E</b>val in Industrial Datasets
     <br />
-    <a href="https://huggingface.co/datasets/AL-GR/AL-GR"><strong>Explore the dataset »</strong></a>
+    <a href="https://huggingface.co/datasets/AL-GR"><strong>Explore full dataset in Huggingface »</strong></a>
     <br />
     <br />
     <a href="https://github.com/selous123/al_sid">View Demo</a>
@@ -88,7 +88,7 @@
 Semantic identifiers (SIDs) have gained increasing interest in generative retrieval (GR) due to their meaningful semantic discriminability. Existing studies typically rely on arbitrarily defined SIDs while neglecting the influence of SID configurations on GR. Besides, evaluations conducted on datasets with limited multimodal features and behaviors also hinder their reliability in industrial traffic. To address these limitations, we propose **FORGE**, a comprehensive benchmark for <u>**FO**</u>rming semantic identifie<u>**R**</u> in <u>**G**</u>enerative <u>**E**</u>trieval with industrial datasets. Specifically, FORGE is equipped with a dataset comprising **14 billion** user interactions and multi-modal features of **250 million** items collected from an e-commerce platform, enabling researchers to construct and evaluate their own SIDs.
 Leveraging this dataset, we systematically explore various strategies for SID generation and validate their effectiveness across different settings and tasks. Extensive online experiments show **8.93\%** and **0.35\%** improvements in PVR and transaction count, highlighting the practical value of our approach. 
 Notably, we propose two novel metrics of SID that correlate well with GR performance, providing insights into a convenient measurement of SID quality without training GR. Subsequent offline pretraining also offers support for online convergence in industrial applications. 
-The code and data are available at [code repo](https://anonymous.4open.science/FORGE).
+The code and data are available at [code repo](https://github.com/selous123/al_sid).
 
 <!-- <p align="right">(<a href="#readme-top">back to top</a>)</p> -->
 
