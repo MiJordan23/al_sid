@@ -30,7 +30,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://code.alibaba-inc.com/selous123/grs_recom">
+  <a href="https://github.com/selous123/al_sid">
     <img src="asset/Title.png" alt="Logo" width="80" height="80">
   </a>
 
@@ -39,14 +39,14 @@
   <p align="center">
      <b>FO</b>rming semantic identifie<b>R</b>s for <b>G</b>enerative retri<b>E</b>val in Industrial Datasets
     <br />
-    <a href="https://code.alibaba-inc.com/selous123/grs_recom"><strong>Explore the docs »</strong></a>
+    <a href="https://huggingface.co/datasets/AL-GR/AL-GR"><strong>Explore the dataset »</strong></a>
     <br />
     <br />
-    <a href="https://code.alibaba-inc.com/selous123/grs_recom">View Demo</a>
+    <a href="https://github.com/selous123/al_sid">View Demo</a>
     &middot;
-    <a href="https://code.alibaba-inc.com/selous123/grs_recom/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
+    <a href="https://github.com/selous123/al_sid/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     &middot;
-    <a href="https://code.alibaba-inc.com/selous123/grs_recom/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+    <a href="https://github.com/selous123/al_sid/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
   </p>
 </div>
 
@@ -83,7 +83,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://code.alibaba-inc.com/selous123/grs_recom)
+[![Product Name Screen Shot][product-screenshot]](https://github.com/selous123/al_sid)
 
 Semantic identifiers (SIDs) have gained increasing interest in generative retrieval (GR) due to their meaningful semantic discriminability. Existing studies typically rely on arbitrarily defined SIDs while neglecting the influence of SID configurations on GR. Besides, evaluations conducted on datasets with limited multimodal features and behaviors also hinder their reliability in industrial traffic. To address these limitations, we propose **FORGE**, a comprehensive benchmark for <u>**FO**</u>rming semantic identifie<u>**R**</u> in <u>**G**</u>enerative <u>**E**</u>trieval with industrial datasets. Specifically, FORGE is equipped with a dataset comprising **14 billion** user interactions and multi-modal features of **250 million** items collected from an e-commerce platform, enabling researchers to construct and evaluate their own SIDs.
 Leveraging this dataset, we systematically explore various strategies for SID generation and validate their effectiveness across different settings and tasks. Extensive online experiments show **8.93\%** and **0.35\%** improvements in PVR and transaction count, highlighting the practical value of our approach. 
@@ -172,7 +172,7 @@ print("embeds:", embeds.shape, embeds[:1]) #(6844930, 512) [[xx,xx,...,xx]]
 import numpy as np
 import os
 # 1. 加载 .npz 文件
-dirpath = '~/git/grs_recom/SID_generation/datas'
+dirpath = '~/git/al_sid/SID_generation/datas'
 filename1 = '5mold_80msideinfo_feat.npz'
 file_path = os.path.join(dirpath, filename1)  # 替换为你的文件路径
 data = np.load(file_path)
@@ -258,7 +258,7 @@ _For more examples, please refer to the [Documentation]()_
 - [x] SID Generation
 - [x] Data Processing
 
-See the [open issues](https://code.alibaba-inc.com/selous123/grs_recom/issues) for a full list of proposed features (and known issues).
+See the [open issues](https://github.com/selous123/al_sid/issues) for a full list of proposed features (and known issues).
 
 <!-- <p align="right">(<a href="#readme-top">back to top</a>)</p> -->
 
@@ -282,8 +282,8 @@ Don't forget to give the project a star! Thanks again!
 
 ### Top contributors:
 
-<!-- <a href="https://code.alibaba-inc.com/selous123/grs_recom/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=selous123/grs_recom" alt="contrib.rocks image" />
+<!-- <a href="https://github.com/selous123/al_sid/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=selous123/al_sid" alt="contrib.rocks image" />
 </a> -->
 
 
@@ -301,7 +301,7 @@ Distributed under the project_license. See `LICENSE.txt` for more information.
 ## Contact
 
 <!-- Your Name - [@twitter_handle](https://twitter.com/twitter_handle) - email@email_client.com -->
-<!-- Project Link: [https://code.alibaba-inc.com/selous123/grs_recom](https://code.alibaba-inc.com/selous123/grs_recom) -->
+<!-- Project Link: [https://github.com/selous123/al_sid](https://github.com/selous123/al_sid) -->
 <!-- <p align="right">(<a href="#readme-top">back to top</a>)</p> -->
 
 
@@ -331,16 +331,16 @@ Please cite the following paper if you find our code helpful.
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/selous123/grs_recom.svg?style=for-the-badge
-[contributors-url]: https://code.alibaba-inc.com/selous123/grs_recom/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/selous123/grs_recom.svg?style=for-the-badge
-[forks-url]: https://code.alibaba-inc.com/selous123/grs_recom/network/members
-[stars-shield]: https://img.shields.io/github/stars/selous123/grs_recom.svg?style=for-the-badge
-[stars-url]: https://code.alibaba-inc.com/selous123/grs_recom/stargazers
-[issues-shield]: https://img.shields.io/github/issues/selous123/grs_recom.svg?style=for-the-badge
-[issues-url]: https://code.alibaba-inc.com/selous123/grs_recom/issues
-[license-shield]: https://img.shields.io/github/license/selous123/grs_recom.svg?style=for-the-badge
-[license-url]: https://code.alibaba-inc.com/selous123/grs_recom/blob/main/LICENSE
+[contributors-shield]: https://img.shields.io/github/contributors/selous123/al_sid.svg?style=for-the-badge
+[contributors-url]: https://github.com/selous123/al_sid/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/selous123/al_sid.svg?style=for-the-badge
+[forks-url]: https://github.com/selous123/al_sid/network/members
+[stars-shield]: https://img.shields.io/github/stars/selous123/al_sid.svg?style=for-the-badge
+[stars-url]: https://github.com/selous123/al_sid/stargazers
+[issues-shield]: https://img.shields.io/github/issues/selous123/al_sid.svg?style=for-the-badge
+[issues-url]: https://github.com/selous123/al_sid/issues
+[license-shield]: https://img.shields.io/github/license/selous123/al_sid.svg?style=for-the-badge
+[license-url]: https://github.com/selous123/al_sid/blob/main/LICENSE
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/linkedin_username
 [product-screenshot]: asset/FORGE.png
