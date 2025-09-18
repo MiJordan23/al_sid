@@ -10,8 +10,8 @@ class DataCollatorWrapper(DataCollatorMixin):
 
     data_collator: DataCollator = None
 
-    # 模型输入以外的字段，比如预测时希望输出的数据集原始字段，尤其是string类型的，
-    # 因为string不能生成tensor，transformers默认的DataCollator不支持
+    # Fields other than model input, such as the original data set fields you want to output during prediction, especially those of string type.
+    # Because strings cannot generate tensors, the default DataCollator of transformers does not support this.
     extra_feature_names: List[str] = None
 
     def __call__(self, features, return_tensors=None):

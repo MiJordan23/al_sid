@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-AUTHOR  :selous(selous.zt@alibaba-inc.com)
+AUTHOR  :selous
 DATE    :2025.9.2
-FUNC    :一体化脚本：扩展 Qwen2.5-0.5B 的 tokenizer（加入 C0-C65536），并进行全量微调
+FUNC    :All-in-one script: Extend the tokenizer of Qwen2.5-0.5B (add C0-C65536) and perform full fine-tuning
 """
 import os
 import argparse
@@ -32,7 +32,7 @@ from utils.log import logger
 from utils.trainer import GRSTrainer
 from utils.data_collator import DataCollatorWrapper
 
-## 根据参数定义Runner不同的配置
+## Define different Runner configurations based on parameters
 class Runner:
     config: EasyDict = None
     def __init__(self, config: EasyDict):
@@ -42,7 +42,7 @@ class Runner:
             for key, value in self.config.envs.items():
                 os.environ[str(key)] = str(value)
         # -------------------------------
-        # 1. 解析配置参数 包括custom_args, training_args, 需要结合huggingface的配置
+        # 1. Parsing configuration parameters including custom_args and training_args, which need to be combined with huggingface configuration
         # -------------------------------
         self.training_args, self.custom_args = self.init_args(self.config)
         self.predict_output = self.config.predict_output
@@ -72,12 +72,12 @@ class Runner:
 
         parser = HfArgumentParser(training_args_class)
         training_args = convert_args_value_type(config.get("training_args", {}), training_args_class)
-        ## 需要根据配置构建一个可用的文件名
+        ## Need to build a usable file name based on the configuration
         training_args["output_dir"] = os.path.expanduser(training_args["output_dir"])
 
-        ## Todo: 根据参数创建子文件夹
+        ## Todo: Create subfolders based on parameters
         training_args["report_to"] = "none"
-        training_args, = parser.parse_dict(training_args, False) #将training_args转化成HF格式的Arguments
+        training_args, = parser.parse_dict(training_args, False) #Convert training_args into HF format Arguments
 
         job_types = [training_args.do_train,training_args.do_eval,training_args.do_predict]
         if sum(job_types) != 1 and not (job_types[0] and job_types[1]):
@@ -97,7 +97,7 @@ class Runner:
         return preprocess_function
         
     def create_model(self):
-        ## 根据self.config创建model
+        ## Create model according to self.config
         checkpoint_path = self.config.load_checkpoint_from
         device_map = self.training_args.device
 
@@ -113,18 +113,18 @@ class Runner:
         else:
             raise ValueError(f"model_type:{self.config.model_type} is not defined yet.")
 
-        if self.custom_args.load_func == "scratch":#读取模型的配置文件, 初始化模型结构
+        if self.custom_args.load_func == "scratch":#Read the model configuration file and initialize the model structure
             config = AutoConfig.from_pretrained(checkpoint_path)
             model = model_cls(config)
-        elif self.custom_args.load_func == "dense":#只 load dense
-            # 1. load 参数, 将embedding层随机初始化
+        elif self.custom_args.load_func == "dense":#Only load dense
+            # 1. Load parameters, randomly initialize the embedding layer
             model = model_cls.from_pretrained(checkpoint_path, device_map=device_map)   
             embed_layer = model.base_model.embed_tokens
-            nn.init.normal_(embed_layer.weight, mean=0.0, std=0.02) ##随机初始化
-            # 2. 冻结所有层
+            nn.init.normal_(embed_layer.weight, mean=0.0, std=0.02) ##randomly initialize
+            # 2. freeze all layer
             for param in model.parameters():
                 param.requires_grad = False
-            # 3. 解冻嵌入层（假设嵌入层位于 model.base_model.embed_tokens）
+            # 3. Unfreeze the embedding layer (assuming the embedding layer is in model.base_model.embed_tokens)
             for param in embed_layer.parameters():
                 param.requires_grad = True
         else:
@@ -141,22 +141,22 @@ class Runner:
         dataset_name = self.config.dataset_name
         data_file = self.config.data_file
         if self.is_train:
-            print(f"📊 加载数据集...{data_file}")
+            print(f"📊 loading dataset...")
             if os.path.isfile(data_file):
                 dataset = load_dataset("csv", data_files=data_file, split="train", streaming=self.config.streaming)
             else:
                 dataset = load_dataset(dataset_name, data_files=data_file, split="train", streaming=self.config.streaming)
-            print("🔄 正在处理数据集...")
+            print("🔄 processing dataset...")
             tokenized_train = dataset.map(self.preprocess_function, batched=False, remove_columns=["system", "user", "answer"])
             return tokenized_train, None
         else:
-            print("📊 加载数据集...")
+            print(f"📊 loading dataset...")
             if os.path.isfile(data_file):
                 dataset = load_dataset("csv", data_files=data_file, split="all")
             else:
-                ## 要根据stage不同读取不同的文件
+                ## To read different files according to different stages
                 dataset = load_dataset(dataset_name, data_files=data_file, split="all")
-            print("🔄 正在处理数据集...")
+            print("🔄 processing dataset...")
             #tokenized_test = dataset["test"].map(self.preprocess_function, batched=False, remove_columns=["instruction", "input", "output"])
             tokenized_test = dataset.map(self.preprocess_function, batched=False)
             return None, tokenized_test
@@ -180,13 +180,13 @@ class Runner:
             # add special token: [SEP]
             special_tokens_dict = {'additional_special_tokens': tokenizer.all_special_tokens + ['[SEP]']}
             tokenizer.add_special_tokens(special_tokens_dict)
-            # add token: C0 ~ C65535 增加一个大的词表覆盖所有的token
+            # add token: C0 ~ C65535
             tokenizer.add_tokens(['C%d' % i for i in range(0, 2 * 32768)])
             print('New tokenizer length: ', len(tokenizer))
         return tokenizer
 
     def create_trainer(self) -> Union[Trainer, None]:
-        #创建trainer
+        # create trainer
         trainer_cls = self.trainer_class()
 
         kwargs = {
@@ -198,7 +198,7 @@ class Runner:
             "predict_output":self.predict_output
         }
 
-        ## 自定义损失函数？
+        ## loss function
         compute_loss_func = self.create_compute_loss_func()
         if compute_loss_func is not None:
             kwargs["compute_loss_func"] = compute_loss_func
@@ -214,18 +214,18 @@ class Runner:
         self.data_collator = self.create_data_collator()
         self.trainer = self.create_trainer()
         
-        ## 根据配置文件执行训练和测试
+        ## Execute training and testing according to the configuration file
         if self.training_args.do_train:
             self.trainer.train()
         elif self.training_args.do_predict:
             params = {"test_dataset": self.test_dataset}
             if self.gen_kwargs is not None:
                 params.update(self.gen_kwargs)
-            #得在每一个predict_step的过程中写入到文件中
+            #It must be written to the file during each predict_step
             self.trainer.predict(**params)
 
     def close(self, success=True):
-        # 做一些收尾工作，例如保存模型 看看要不要做？
+        # Do some finishing work,
         if self.trainer and self.trainer.predict_writer:
             return self.trainer.predict_writer.close()
         if dist.is_initialized():
@@ -238,27 +238,26 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, required=True)
 
-    #支持分布式
-    parser.add_argument('--world_size', default=1, type=int, help='分布式进程数量')
+    #Support distributed
+    parser.add_argument('--world_size', default=1, type=int, help='Number of distributed processes')
     parser.add_argument('--rank', default=0, type=int, help='')
     parser.add_argument('--gpu', default=0, type=int, help='')
     parser.add_argument('--local-rank', default=-1, type=int,
-                        help="分布式训练中的本地排名。自动由PAI或XDL启动器输入")
-    parser.add_argument('--dist_url', default='env://', help='设置分布式训练的URL')
-    parser.add_argument('--distributed', action='store_true', help='是否启用分布式训练')
+                        help="Local ranking in distributed training. Automatically imported by PAI or XDL launcher")
+    parser.add_argument('--dist_url', default='env://', help='Set the URL for distributed training')
+    parser.add_argument('--distributed', action='store_true', help='Whether to enable distributed training')
     args = parser.parse_args()
 
     config = EasyDict(args.config)
-    ## output地址和配置文件名绑定
+    ## Binding output address and configuration file name
     output_dir = config.training_args.get('output_dir', './logs/')
     config.training_args['output_dir'] = os.path.join(output_dir, os.path.splitext(os.path.basename(args.config))[0])
     if 'predict_output' in config:
         config.predict_output['path'] = config.training_args['output_dir']
 
-    #初始化分布式环境
+    #Initialize the distributed environment
     dist.init_process_group(backend='nccl', timeout=timedelta(seconds=1800))
 
-    ## parameters/读取配置文件地址 ./config/xx.json
     runner = Runner(config)
     success = True
     try:

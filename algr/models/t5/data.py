@@ -11,7 +11,7 @@ class T5DataProcess:
         self.is_train = is_train
         self.input_column = custom_args.input_column ##prompt
         self.output_column = custom_args.output_column ##label
-        self.training_mode = custom_args.training_mode #training_mode默认返回None
+        self.training_mode = custom_args.training_mode #training_mode
 
     def __call__(self, example: Dict[str, Any]) -> Dict[str, List[int]]:
         # 提取字段
@@ -26,9 +26,6 @@ class T5DataProcess:
             return_attention_mask=False,
             add_special_tokens=True  
         )
-        # print(source_inputs)
-        # exit(0)
-        #input_ids = source_inputs["input_ids"] + [self.tokenizer.eos_token_id]  # T5: 显式加 </s>
         input_ids = source_inputs["input_ids"]
 
         if not self.is_train:
@@ -36,11 +33,11 @@ class T5DataProcess:
                     "labels": [-100]
                     }
 
-        # 构建 target text
+        # build target text
         target_text = output_text
         
         if self.training_mode == "pretrain":
-            target_text = input_text  # 自监督：输入即输出
+            target_text = input_text 
 
         target_inputs = self.tokenizer(
             target_text,
@@ -48,13 +45,11 @@ class T5DataProcess:
             truncation=True,
             padding=False,
             return_attention_mask=False,
-            add_special_tokens=False  # 不加 bos/eos，由模型处理
+            add_special_tokens=False  # no bos/eos
         )
-        # print(target_inputs)
-        # exit(0)
-        labels = target_inputs["input_ids"] + [self.tokenizer.eos_token_id]  # 加 </s> 到 label 末尾
+        labels = target_inputs["input_ids"] + [self.tokenizer.eos_token_id]  # add </s> to label 
 
-        # 截断到最大长度
+        # trunct to the max_target_length
         if self.max_target_length > 0 and len(labels) > self.max_target_length:
             labels = labels[:self.max_target_length]
 

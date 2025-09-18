@@ -1,7 +1,7 @@
 # encoding: utf-8
 """
-@Author: Yingwu.XSW
-@Date: 2025/9/4 下午2:14
+@Author: yw
+@Date: 2025/9/4 14:14
 
 @Function:
 """
@@ -31,31 +31,31 @@ from utils.optim_factory import get_param_groups
 
 
 def parse_arguments():
-    """解析命令行参数"""
+    """parse argument"""
     parser = argparse.ArgumentParser('RQVAE training', add_help=False)
     parser.add_argument('--cfg', default='configs/rqvae_i2v.yml', type=str)
-    parser.add_argument('--finetune', default='', help='微调检查点')
-    parser.add_argument('--output_dir', default='', help='存储路径')
-    parser.add_argument("--tables", default='', help="ODPS表路径")
-    parser.add_argument('--resume', default='', help='恢复检查点路径')
-    parser.add_argument('--train_root', default='', help='训练数据根目录')
-    parser.add_argument('--epochs', default=0, type=int, help='训练周期数')
+    parser.add_argument('--finetune', default='', help='Fine-tuning checkpoints')
+    parser.add_argument('--output_dir', default='', help='Storage path')
+    parser.add_argument("--tables", default='', help="ODPS table path")
+    parser.add_argument('--resume', default='', help='Recovery checkpoint path')
+    parser.add_argument('--train_root', default='', help='Training data root directory')
+    parser.add_argument('--epochs', default=0, type=int, help='Number of training epochs')
 
     # 分布式训练参数
-    parser.add_argument('--world_size', default=1, type=int, help='分布式进程数量')
+    parser.add_argument('--world_size', default=1, type=int, help='Number of distributed processes')
     parser.add_argument('--rank', default=0, type=int, help='')
     parser.add_argument('--gpu', default=0, type=int, help='')
     parser.add_argument('--local-rank', default=-1, type=int,
-                        help="分布式训练中的本地排名。自动由PAI或XDL启动器输入")
-    parser.add_argument('--dist_url', default='env://', help='设置分布式训练的URL')
-    parser.add_argument('--distributed', action='store_true', help='是否启用分布式训练')
-    parser.add_argument('--save_prefix', default='test', help="保存前缀")
+                        help="Local ranking in distributed training. Automatically imported by PAI or XDL launcher")
+    parser.add_argument('--dist_url', default='env://', help='Set the URL for distributed training')
+    parser.add_argument('--distributed', action='store_true', help='Whether to enable distributed training')
+    parser.add_argument('--save_prefix', default='test', help="Save Prefix")
 
     return parser.parse_args()
 
 
 def gather_tensors(tensor):
-    """收集所有进程上的张量"""
+    """gather tensors on all processes"""
     world_size = dist.get_world_size()
     with torch.no_grad():
         tensors_list = [torch.zeros_like(tensor) for _ in range(world_size)]
@@ -65,13 +65,13 @@ def gather_tensors(tensor):
 
 
 def initialize_training_environment(args, config):
-    """初始化训练环境"""
+    """init environment"""
     dist_utils.init_distributed_mode(config, args)
     pprint(OmegaConf.to_object(config))
 
 
 def create_model(config):
-    """创建模型实例"""
+    """create model"""
     hps = {
         "bottleneck_type": "rq",
         "embed_dim": config.model.codebook_dim,
@@ -111,7 +111,7 @@ def create_model(config):
 
 
 def prepare_optimizer_and_scheduler(config, model_without_ddp):
-    """准备优化器和学习率调度器"""
+    """Prepare the optimizer and learning rate scheduler"""
     effective_batch_size = config.data.batch_size * config.train.accum_iter * dist_utils.get_world_size()
 
     config.output_dir += f"{config.data.save_prefix}_ebs{effective_batch_size}_lr{config.train.lr}_ep{config.train.epochs}"
@@ -124,11 +124,11 @@ def prepare_optimizer_and_scheduler(config, model_without_ddp):
     if config.train.lr is None:
         config.train.lr = config.train.blr * effective_batch_size / 256
 
-    print(f"基础学习率: {round(config.train.lr * 256 / effective_batch_size, 6)}")
-    print(f"实际学习率: {round(config.train.lr, 6)}")
+    print(f"base lr: {round(config.train.lr * 256 / effective_batch_size, 6)}")
+    print(f"lr: {round(config.train.lr, 6)}")
 
-    print(f"梯度累积迭代次数: {config.train.accum_iter}")
-    print(f"有效批次大小: {effective_batch_size}")
+    print(f"Gradient accumulation: {config.train.accum_iter}")
+    print(f"Effective batch size: {effective_batch_size}")
 
     param_groups = get_param_groups(config, model_without_ddp)
 
@@ -138,7 +138,7 @@ def prepare_optimizer_and_scheduler(config, model_without_ddp):
 
 
 def main():
-    """主函数入口"""
+    """main entrance"""
     args = parse_arguments()
     cfg = get_config(args)
 
@@ -164,7 +164,7 @@ def main():
 
     # -----------------------------------------------------------------------------------------------
     # Build model
-    print("正在创建模型...")
+    print("building model...")
     model = create_model(cfg)
 
     # -----------------------------------------------------------------------------------------------
@@ -178,12 +178,12 @@ def main():
     model.cuda(cfg.dist.gpu)
 
     model_without_ddp = model
-    print(f"模型: {str(model_without_ddp)}")
+    print(f"Model: {str(model_without_ddp)}")
     number_of_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"模型参数数量（百万）: {number_of_trainable_params / 1e6:.2f}")
+    print(f"Parametes of Model(M): {number_of_trainable_params / 1e6:.2f}")
 
     if cfg.dist.distributed:
-        print("模型分布式数据并行化")
+        print("Model distributed data parallelism")
         model = torch.nn.parallel.DistributedDataParallel(
             module=model,
             device_ids=[cfg.dist.gpu],
@@ -194,23 +194,23 @@ def main():
 
     # -----------------------------------------------------------------------------------------------
     # Initialize dataset and dataloader
-    print("正在创建数据集及数据加载器...")
-    assert len(cfg.data.tables) > 0 or cfg.data.FromOSS, '无输入数据！'
+    print("Creating dataset and data loader...")
+    assert len(cfg.data.tables) > 0 or cfg.data.FromOSS, 'No Data!'
     data = get_data(cfg=cfg, epoch_id=0)
     for key in data:
-        print(f"训练数据集 {key} 的大小: {len(data[key].dataset)}")
+        print(f"The size of the training dataset {key}: {len(data[key].dataset)}")
 
     # -----------------------------------------------------------------------------------------------
     # Initialize optimizer and lr scheduler
-    print("正在创建优化器及学习率调度器...")
+    print("Creating optimizer and learning rate scheduler...")
     optimizer = prepare_optimizer_and_scheduler(config=cfg, model_without_ddp=model_without_ddp)
     print(optimizer)
     OmegaConf.set_readonly(cfg, True)
 
     # -----------------------------------------------------------------------------------------------
     # training
-    print(f"开始训练 {cfg.train.epochs} 周期...")
-    print(f"输出目录: {cfg.output_dir}")
+    print(f"start training {cfg.train.epochs} epoch...")
+    print(f"output dir: {cfg.output_dir}")
     start_time = time.time()
 
     for epoch in range(cfg.train.start_epoch, cfg.train.epochs):
@@ -235,23 +235,23 @@ def main():
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
-    print(f"训练时间: {total_time_str}")
+    print(f"Training Time: {total_time_str}")
 
 
 def train_one_epoch(model: torch.nn.Module, data: dict, optimizer: torch.optim.Optimizer,
                     epoch: int, cfg=None):
     """
-    执行一个训练周期
+    Executes a training epoch
 
-    参数：
-      - `model`: 要训练的模型
-      - `data`: 数据加载器字典
-      - `optimizer`: 使用的优化器
-      - `epoch`: 当前训练周期数
-      - `cfg`: 配置对象
+    Parameters:
+    - `model`: Model to train
+    - `data`: Dictionary of data loaders
+    - `optimizer`: Optimizer to use
+    - `epoch`: Current training epoch number
+    - `cfg`: Configuration object
 
-    返回值：
-      - 训练统计信息字典
+    Return value:
+    - Dictionary of training statistics
     """
 
     metric_logger = logger.MetricLogger(delimiter="  ")
@@ -286,7 +286,7 @@ def train_one_epoch(model: torch.nn.Module, data: dict, optimizer: torch.optim.O
 
     # 开始训练循环
     print('=======>')
-    print(f'开始第 {epoch} 周期')
+    print(f'Start {epoch}')
 
     for data_iter_step, (batch, select_idx, dataset_name) in enumerate(
             metric_logger.log_every_list_with_datasetname(data_iter_list, num_batches_per_epoch_list, dataset_names,
@@ -295,8 +295,6 @@ def train_one_epoch(model: torch.nn.Module, data: dict, optimizer: torch.optim.O
         if data_iter_step % accum_iter == 0:
             lr_sched.adjust_learning_rate(optimizer, data_iter_step / num_batches_per_epoch + epoch, cfg)
 
-        # 处理不同类型的训练数据集
-        # 重建
         if select_idx == 0:
 
             _, features = batch

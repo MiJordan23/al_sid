@@ -2,8 +2,8 @@
 import pandas as pd
 import json
 
-# datasets: 链接
-df = pd.read_csv("./train_data.csv", sep='\t')  # 替换为你的文件路径
+# datasets: 
+df = pd.read_csv("./train_data.csv", sep='\t')  # replace your filename
 print(df)
 
 with open("qwen_finetune_data.jsonl", "w", encoding="utf-8") as f:
@@ -15,4 +15,4 @@ with open("qwen_finetune_data.jsonl", "w", encoding="utf-8") as f:
             "output": row["answer"].strip()
         }, ensure_ascii=False) + "\n")
 
-print("✅ 数据已生成: qwen_finetune_data.jsonl")
+print("✅ test data is generated: qwen_finetune_data.jsonl")

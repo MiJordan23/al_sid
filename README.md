@@ -154,8 +154,8 @@ The file contains three components:
 import numpy as np
 import os
 
-# 1. 加载 .npz 文件
-file_path = os.path.join(dirpath, filename2)  # 替换为你的文件路径
+# 1. load .npz file
+file_path = os.path.join(dirpath, filename2)  # replace your filename
 data = np.load(file_path, allow_pickle=True)
 itemEncID, pairs, embeds = data['itemEncID'].item(), data['pairs'], data['embeds'].astype(np.float32)
 for key, item in itemEncID.items():
@@ -171,12 +171,11 @@ print("embeds:", embeds.shape, embeds[:1]) #(6844930, 512) [[xx,xx,...,xx]]
 ``` python
 import numpy as np
 import os
-# 1. 加载 .npz 文件
+# 1. load .npz file
 dirpath = '~/git/al_sid/SID_generation/datas'
 filename1 = '5mold_80msideinfo_feat.npz'
-file_path = os.path.join(dirpath, filename1)  # 替换为你的文件路径
+file_path = os.path.join(dirpath, filename1)  # replace your filename1
 data = np.load(file_path)
-# 2. 查看文件中的数组名称（.npz 文件可能包含多个数组）
 print("Available arrays:", data.files) ##Available arrays: ['ids', 'embeds']
 for key in data:
     print(f"{key}: {data[key].shape}")

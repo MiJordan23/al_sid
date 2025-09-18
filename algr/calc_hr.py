@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 def calculate_hit_rate_k(generate_text, answer, k_list, sid_to_ids_map):
     """
-    计算单个样本的 HR@K
+    Calculate HR@K for a single sample
     """
     generated_ids = []
     for sid in generate_text:
@@ -26,7 +26,7 @@ def calculate_hit_rate_k(generate_text, answer, k_list, sid_to_ids_map):
 
 def calculate_average_hit_rate_k(file_path, k_list, sid_to_ids_map, decoder_only=True):
     """
-    计算所有样本的平均 HR@K
+    Calculate the average HR@K for all samples
     """
     total_count = 0
     hr_count = [0] * len(k_list)
@@ -54,25 +54,25 @@ def calculate_average_hit_rate_k(file_path, k_list, sid_to_ids_map, decoder_only
 
 def convert_csv_to_map(data):
     """
-    使用 Pandas 列操作 + groupby 优化性能
-    参数:
-        data: 原始数据（列表或 DataFrame）
-    返回:
-        sid_to_ids_map: 字典，键为 SID，值为对应的 item_id 列表
+    Using Pandas column operations + groupby to optimize performance
+    Parameters:
+        data: Original data (list or DataFrame)
+    Returns:
+        sid_to_ids_map: Dictionary with keys being SIDs and values ​​being lists of corresponding item_ids
     """
-    # 1. 转换为 DataFrame 并命名列
+    # 1. Convert to DataFrame and name the columns
     df = pd.DataFrame(data).dropna()
-    df.columns = ['item_id', 'codebook_lv1', 'codebook_lv2', 'codebook_lv3']  # 假设输入数据列为 [item_id, col1, col2, col3]
+    df.columns = ['item_id', 'codebook_lv1', 'codebook_lv2', 'codebook_lv3']
 
-    # 2. 列操作：转换为整数并计算 num2, num3
+    # 2. Column operation: convert to integer and calculate num2, num3
     df['col1'] = df['codebook_lv1'].astype(int)
     df['col2'] = df['codebook_lv2'].astype(int) + 8192
     df['col3'] = df['codebook_lv3'].astype(int) + 8192 * 2
 
-    # 3. 构建 sid 列
+    # 3. Constructing the sid column
     df['sid'] = 'C' + df['col1'].astype(str) + 'C' + df['col2'].astype(str) + 'C' + df['col3'].astype(str)
 
-    # 4. 按 sid 分组，聚合 item_id 为列表
+    # 4. Group by sid and aggregate item_id into a list
     sid_to_ids_map = df.groupby('sid')['item_id'].agg(list).to_dict()
     return sid_to_ids_map
 
@@ -93,17 +93,16 @@ def main():
     file_path = args.generate_file
     # sid_to_ids_map = {
     #     "C3936C1881C5331": ["HiIRC", "xx", "xx"]
-    #     # 其他 SID 映射...
     # }
     if args.nebula:
         item_sid_data = pd.read_csv(os.path.join(args.dataset_name, args.item_sid_file))
     else:
         item_sid_data = load_dataset(dataset_name, data_files=item_sid_file)
     
-    ## 将处理好的文件写入到本地，下次运行的时候回快一些
+    ## Write the processed file to the local computer so that it will be faster the next time you run it.
     local_sid2item_file = f"./data/sid2item_v_{os.path.basename(item_sid_file).split('.')[0]}.json"
     if os.path.isfile(local_sid2item_file):
-        # 读取 JSON 文件
+        # load JSON file
         print("load file directly")
         with open(local_sid2item_file, "r", encoding="utf-8") as f:
             sid_to_ids_map = json.load(f)
@@ -111,7 +110,7 @@ def main():
     else:
         print("process data firstly")
         sid_to_ids_map = convert_csv_to_map(item_sid_data)
-        # 写入 JSON 文件
+        # write JSON  file
         with open(local_sid2item_file, "w", encoding="utf-8") as f:
             json.dump(sid_to_ids_map, f, indent=4, ensure_ascii=False)
         print("load data sucess!")

@@ -67,19 +67,19 @@ def extract(model, g_embs, g_ids):
 
 
 def cal2_hnsw(querys, g_id2emb_rqvae, rqvae_output, g_ids):
-    # query2 去重计算 hitrate
+    # query2 calc hitrate
     all_num = 0.0
     hit_num = 0.0
     k = 31
 
     dim = rqvae_output.shape[-1]
-    num_elements = 5000000  # 需要插入的数据点数量
+    num_elements = 5000000  
     assert num_elements > rqvae_output.shape[0]
 
-    # 初始化 HNSW 索引
+    # build HNSW index
     p = hnswlib.Index(space='ip', dim=dim)
     p.init_index(max_elements=num_elements, ef_construction=256, M=16)
-    p.set_ef(50)  # 设置查询时的 ef 值
+    p.set_ef(50)  # setting ef
     ids = np.arange(num_elements)
     p.add_items(rqvae_output, g_ids)
 
@@ -97,7 +97,7 @@ def cal2_hnsw(querys, g_id2emb_rqvae, rqvae_output, g_ids):
         topk_ids, sorted_top30_values = p.knn_query(qid_fea[i:i + span], k=k)
 
         for rids, j in zip(topk_ids, list(range(i, min(i + span, len(unique_qids))))):
-            rids = [iid for iid in rids if iid != unique_qids[j]][:k - 1]  # 不召回自己
+            rids = [iid for iid in rids if iid != unique_qids[j]][:k - 1]  # except itself
             retrieve_item_ids_unique[unique_qids[j]].update(rids)
 
     all_num, hit_num = 0, 0
@@ -118,7 +118,7 @@ def cal2_hnsw(querys, g_id2emb_rqvae, rqvae_output, g_ids):
 
 
 def cal2(querys, g_id2emb_rqvae, rqvae_output, g_ids):
-    # query2 去重计算 hitrate
+    # query2 calc hitrate
     all_num = 0.0
     hit_num = 0.0
     k = 31
@@ -136,7 +136,7 @@ def cal2(querys, g_id2emb_rqvae, rqvae_output, g_ids):
     span = 500
     for i in tqdm(range(0, len(unique_qids), span)):
         sim = qid_fea[i:i + span] @ rqvae_output.T
-        # 取top30
+        # top30
         top30_indices = np.argpartition(sim, -k, axis=1)[:, -k:]
         top30_values = np.take_along_axis(sim, top30_indices, axis=1)
         sorted_order = np.argsort(-top30_values, axis=1)
@@ -198,7 +198,6 @@ def test_model(model_path_list, model, all_emb_path=gallery_path_dict['80msidein
 
 
 def filter_existing_paths(model_path_list):
-    # 保留真实存在的路径
     existing_paths = []
     for path in model_path_list:
         if os.path.exists(path):

@@ -9,7 +9,6 @@ from utils.predict import PredictWriter, create_predict_writer
 
 class GRSTrainer(Seq2SeqTrainer):
 
-    # 预测结果输出
     predict_output: Optional[Dict[str, Any]] = None
     predict_writer: Optional[PredictWriter] = None
 
@@ -44,9 +43,9 @@ class GRSTrainer(Seq2SeqTrainer):
             if not self.args.remove_unused_columns:
                 self.accelerator.device_placement = False
 
-    ## 生成流程：
-    # 1. 根据predict_output设置定义writer
-    # 2. 将输出结果写如到output.txt文件中
+    ## Generation Process:
+    # 1. Define a writer based on the predict_output setting
+    # 2. Write the output to the output.txt file
     def prediction_step(
             self,
             model: nn.Module,
