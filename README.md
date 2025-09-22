@@ -281,9 +281,9 @@ Don't forget to give the project a star! Thanks again!
 
 ### Top contributors:
 
-<!-- <a href="https://github.com/selous123/al_sid/graphs/contributors">
+<a href="https://github.com/selous123/al_sid/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=selous123/al_sid" alt="contrib.rocks image" />
-</a> -->
+</a>
 
 
 
@@ -310,7 +310,7 @@ Please cite the following paper if you find our code helpful.
 ```
 @inproceedings{forge2026,
   title={FORGE: Forming Semantic Identifiers for Generative Retrieval in Industrial Datasets},
-  author={Anonymous},
+  author={Kairui Fu, Tao Zhang, Shuwen Xiao and et.al},
   booktitle={{Submit to ICLR}},
   year={2026}
 }
