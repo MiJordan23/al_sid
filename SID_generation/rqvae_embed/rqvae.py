@@ -94,24 +94,22 @@ class RQVAE_EMBED(nn.Module):
 
         # out = self.decode(z_q)
 
-        # 解码第二层和第三层码本向量
         bs, level = xs.shape
         if num_samples > 0:
             z_combined = torch.cat((z_q, z_q_neg), dim=0)
-            decoded = self.decode(z_combined)  # 解码
+            decoded = self.decode(z_combined) 
             out = decoded[:bs]
             out_neg = decoded[bs:]
             out_neg = out_neg.reshape(bs, num_samples, -1)
 
-            # 测试无码本
             # z_combined = torch.cat((z_e, z_e), dim=0)
-            # decoded = self.decode(z_combined)  # 解码
+            # decoded = self.decode(z_combined) 
             # bs =  xs.shape[0]
             # out = decoded[:bs]
             # out2 = decoded[bs:]
             return out, quant_loss, code, feature_norm, quant_norm, z_q, out_neg
         else:
-            out = self.decode(z_q)  # 解码
+            out = self.decode(z_q) 
             return out, quant_loss, code, feature_norm, quant_norm, z_q, all_distances, z_e
 
     def encode(self, x):

@@ -1,7 +1,6 @@
 # encoding: utf-8
 """
-@author: Yingwu.XSW
-@date: 2022/3/24 下午5:07
+@date: 2022/3/24 5:07
 """
 
 import argparse

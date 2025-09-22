@@ -123,7 +123,7 @@ if __name__ == "__main__":
                         help="For distributed training: local_rank. Automatically input in from PAI or XDL launcher")
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
     parser.add_argument('--distributed', action='store_true', help='distributed')
-    parser.add_argument('--save_prefix', default='test', help="保存路径")
+    parser.add_argument('--save_prefix', default='test', help="")
 
     dist_utils.init_distributed_mode2(cfg, args)
     print('job dir: {}'.format(os.path.dirname(os.path.realpath(__file__))))

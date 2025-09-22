@@ -211,18 +211,18 @@ class NativeScalerWithGradNormCount:
 
     def __call__(self, loss, optimizer, clip_grad=None, parameters=None, create_graph=False, update_grad=True,
                  norm_type=None):
-        self._scaler.scale(loss).backward(create_graph=create_graph)  # 计算梯度
+        self._scaler.scale(loss).backward(create_graph=create_graph) 
         if update_grad:
             if clip_grad is not None:
                 assert parameters is not None
                 self._scaler.unscale_(optimizer)  # unscale the gradients of optimizer's assigned params in-place
-                norm = torch.nn.utils.clip_grad_norm_(parameters, clip_grad)  # 裁剪梯度，不会放大，只会缩小
+                norm = torch.nn.utils.clip_grad_norm_(parameters, clip_grad) 
             else:
                 self._scaler.unscale_(optimizer)
                 norm_type = norm_type if norm_type is not None else 2.0
-                norm = get_grad_norm_(parameters, norm_type=norm_type)  # 获取梯度的norm
-            self._scaler.step(optimizer)  # 调整lr
-            self._scaler.update()  # 更新梯度
+                norm = get_grad_norm_(parameters, norm_type=norm_type) 
+            self._scaler.step(optimizer) 
+            self._scaler.update()
         else:
             norm = None
         return norm

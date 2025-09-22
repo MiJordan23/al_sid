@@ -27,16 +27,15 @@ class TwoLayerMLP(nn.Module):
         # self._initialize_weights() # 加入会增大clip_recon_loss，先弃用
 
     def _initialize_weights(self):
-        # 初始化带有ReLU的层 (fc1 和 fc3)
+
         for layer in [self.fc1, self.fc3]:
             init.kaiming_normal_(
                 layer.weight,
-                mode='fan_in',  # 补偿前向传播的方差
-                nonlinearity='relu'  # 针对ReLU的校正
+                mode='fan_in',  
+                nonlinearity='relu'  
             )
-            init.zeros_(layer.bias)  # 偏置初始化为0
+            init.zeros_(layer.bias)  
 
-        # 初始化输出层 (fc2)
         std = 1.0 / (self.fc2.in_features ** 0.5)  # 1/sqrt(256) = 1/16
         init.normal_(self.fc2.weight, mean=0, std=std)
         init.zeros_(self.fc2.bias)

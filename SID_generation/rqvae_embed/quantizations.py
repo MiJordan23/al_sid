@@ -81,7 +81,6 @@ class VQEmbedding(nn.Embedding):
         self.initialize_weights()
         self.distance_type = distance_type
 
-        # 0606退火算法
         # self.prob_decay = 0.00001
         # self.eps = 1e-5
         # self.temperature = 1.
@@ -158,14 +157,12 @@ class VQEmbedding(nn.Embedding):
 
         # embed_idxs = distances.argmin(dim=-1)
 
-        # 依概率采样 + 退火算法
         # if self.training:
         #     # inverted_distances = 1.0 / (distances + 1e-8)
         #     inverted_distances = -distances
         #     # T = 0.1
         #     probabilities = F.softmax(inverted_distances / self.temperature, dim=-1)
         #     # probabilities = inverse_distances / inverse_distances.sum(dim=-1, keepdim=True)
-        #     # 创建一个包含 [B, h, w] 的形状，存储的每个位置对应的概率分布中每个类别的概率
         #     embed_idxs = torch.multinomial(probabilities, num_samples=1).squeeze(-1)
         #     # self.temperature = max(self.prob_decay * self.temperature, self.eps)
         #     self.temperature = max(self.temperature - self.prob_decay, self.eps)
@@ -238,9 +235,7 @@ class VQEmbedding(nn.Embedding):
         embed_idxs, distances = self.find_nearest_embedding(inputs, use_sinkhorn=kwargs.get('use_sinkhorn', True))
 
         if reference_code is not None:
-            # 以一定概率选择参考code的index
             bs = embed_idxs.size(0)
-            # 0.04 比较好
             p = 0.04
             random_probs = torch.rand(bs).to(inputs.device)
             embed_idxs = torch.where(random_probs < p, reference_code, embed_idxs)
@@ -338,8 +333,6 @@ class RQBottleneck(nn.Module):
 
         self.commitment_loss = commitment_loss
         self.commitment_weight1, self.commitment_weight2 = latent_weight
-
-        # kmeans初始化，默认false，使用VQEmbedding中的kaiming初始化
         self.register_buffer('initted', torch.Tensor([not kmeans_init]))
         self.ema = VQ_ema
 
@@ -377,7 +370,6 @@ class RQBottleneck(nn.Module):
 
     @property
     def device(self):
-        """返回当前模型所在的设备"""
         return next(self.parameters()).device
 
     def to_latent_shape(self, x):
@@ -410,7 +402,7 @@ class RQBottleneck(nn.Module):
         """
         B, embed_dim = x.shape
 
-        residual_feature = x.detach().clone()  # 会自减，所以要clone
+        residual_feature = x.detach().clone() 
         # x_ = x.clone()
         feature_norm = [x.pow(2).sum(-1).pow(0.5).mean(-1).detach().cpu()]
 
@@ -460,7 +452,6 @@ class RQBottleneck(nn.Module):
 
     def forward(self, x, num_samples=0, reference_code=None, **kwargs):
         # x_reshaped = self.to_code_shape(x)
-        # 不需要转换shape
         x_reshaped = x
         # if self.training:
         #     self.init_embed_(x_reshaped)
@@ -471,7 +462,6 @@ class RQBottleneck(nn.Module):
 
         commitment_loss, commitment_loss_ze, commitment_loss_zq = self.compute_commitment_loss(x_reshaped, quant_list)
         # quants_trunc = self.to_latent_shape(quant_list[-1])
-        # 不需要转换shape
         quants_trunc = quant_list[-1]
         quants_trunc = x + (quants_trunc - x).detach()
 
@@ -481,7 +471,6 @@ class RQBottleneck(nn.Module):
             'commitment_loss_zq': commitment_loss_zq
         }
 
-        # 和hier版本输出保持对齐
         # quants_trunc2 = quant_list[-2]
         # quants_trunc2 = x + (quants_trunc2 - x).detach()
         quants_neg = None
@@ -509,7 +498,6 @@ class RQBottleneck(nn.Module):
                 else:
                     partial_loss2 = self.cosine_loss(x.detach(), quant) * self.commitment_weight2
             else:
-                # 只让x靠近codebook的相加
                 # if idx != len(quant_list) - 1:
                 #     partial_loss1 = 0.
                 # else:

@@ -1,7 +1,6 @@
 # encoding: utf-8
 """
-@author: Yingwu.XSW
-@date: 2022/8/16 下午2:55
+@date: 2022/8/16 2:55
 """
 import os.path
 from dataclasses import dataclass
@@ -23,7 +22,6 @@ def pad_dataset(dataset, global_batch_size):
 class OSSFileImageNetDataset(torch.utils.data.Dataset):
     def __init__(self, root, split, cfg, transform_func=None):
         super().__init__()
-        # 读取npz文件
         data = np.load(root, allow_pickle=True, mmap_mode='r')
         self.ids, self.embeds = data['ids'], data['embeds'].astype(np.float32)
         del data
@@ -84,13 +82,11 @@ def get_dataset(cfg, is_train, epoch_id=0):
 def get_data(cfg, epoch_id=0):
     data = {}
 
-    # 重建数据
     print('preparing recon data...')
     if cfg.data.train_root:
         data["recon"] = get_dataset(cfg, is_train=True, epoch_id=epoch_id)
 
     def update_data_with_conflict_check(data, new_data):
-        # 检查重名的键
         conflicting_keys = set(new_data.keys()).intersection(set(data.keys()))
 
         if conflicting_keys:
@@ -98,7 +94,6 @@ def get_data(cfg, epoch_id=0):
         else:
             data.update(new_data)
 
-    # 更新 i2i 数据
     i2i_data = get_i2idata_list(cfg.data.train_clip_i2i, cfg)
     update_data_with_conflict_check(data, i2i_data)
 

@@ -27,7 +27,6 @@ def eval_decorator(fn):
     return inner
 
 
-# 定义余弦距离损失
 def cosine_loss(output, target):
     cosine_sim = F.cosine_similarity(output, target, dim=-1)
     loss = 1 - cosine_sim.mean()
@@ -74,17 +73,11 @@ class RQVAE_EMBED_CLIP(nn.Module):
         self.cl_head = CLIPLoss()
 
     def forward(self, *args, **kwargs):
-        # 检查是否需要返回CLIP损失，默认不返回
         if not kwargs.get('return_clip_loss', False):
-            # 确保只有一个位置参数被传递
             assert len(args) == 1
-            # 调用RQ-VAE的前向传播方法
             return self.forward_rqvae(*args, **kwargs)
-        # 如果需要返回CLIP损失，则确保有两个位置参数被传递
         assert len(args) == 2
-        # 删除'return_clip_loss'关键字参数
         del kwargs['return_clip_loss']
-        # 调用CLIP的前向传播方法
         return self.forward_clip(*args, **kwargs)
 
     def forward_rqvae(self, feat):
@@ -103,11 +96,9 @@ class RQVAE_EMBED_CLIP(nn.Module):
         return original + noise
 
     def compute_cosine_and_l2_mean(self, vec1, vec2):
-        # 计算夹角
         cosine_similarity = torch.nn.functional.cosine_similarity(vec1, vec2, dim=-1)
         cosine_similarity_mean = torch.mean(cosine_similarity)
 
-        # 计算 L2 距离
         l2_distances = torch.norm(vec1 - vec2, dim=-1)
         l2_mean = torch.mean(l2_distances)
 
@@ -119,11 +110,9 @@ class RQVAE_EMBED_CLIP(nn.Module):
         fea2_vq, loss_dict2, selected_index2, feature_norm2, quant_norm2, z_q2, all_distances2, z_e2 = self.rq_model(
             fea2, detail=True, **kwargs)
 
-        # log重建相似度和loss
         feas = torch.cat([fea1, fea2], dim=0)
         recons = torch.cat([fea1_vq, fea2_vq], dim=0)
 
-        # 对比学习
         features = {'image_embed': fea1_vq,
                     'text_embed': fea2_vq,
                     'image_embed_ori': fea1,
@@ -143,10 +132,8 @@ class RQVAE_EMBED_CLIP(nn.Module):
         ret['loss_dict2'] = loss_dict2
         ret['commitment_loss'] = (loss_dict1['commitment_loss'] + loss_dict2['commitment_loss']) / 2
 
-        # log重建相似度和loss
         recon_loss = self.compute_loss(recons, ret['commitment_loss'], '', xs=feas, valid=False)['recon_loss']
 
-        # 两个feat的相似度
         pair_code_loss = F.mse_loss(z_e1, z_e2, reduction='mean')
 
         ret.update({

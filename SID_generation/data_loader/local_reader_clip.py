@@ -1,7 +1,6 @@
 # encoding: utf-8
 """
-@Author: Yingwu.XSW
-@Date: 2024/7/30 上午11:05
+@Date: 2024/7/30 11:05
 
 @Function:
 """
@@ -22,7 +21,6 @@ def pad_dataset(dataset, global_batch_size):
 class OSSFileImageNetDataset(torch.utils.data.Dataset):
     def __init__(self, root, split, cfg, transform_func=None):
         super().__init__()
-        # 读取文件
         data = np.load(root, allow_pickle=True)
         self.itemid2index, self.pairs, self.embeds = data['itemEncID'].item(), data['pairs'], data['embeds'].astype(
             np.float32)

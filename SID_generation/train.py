@@ -1,6 +1,5 @@
 # encoding: utf-8
 """
-@Author: yw
 @Date: 2025/9/4 14:14
 
 @Function:
@@ -41,7 +40,6 @@ def parse_arguments():
     parser.add_argument('--train_root', default='', help='Training data root directory')
     parser.add_argument('--epochs', default=0, type=int, help='Number of training epochs')
 
-    # 分布式训练参数
     parser.add_argument('--world_size', default=1, type=int, help='Number of distributed processes')
     parser.add_argument('--rank', default=0, type=int, help='')
     parser.add_argument('--gpu', default=0, type=int, help='')
@@ -284,7 +282,6 @@ def train_one_epoch(model: torch.nn.Module, data: dict, optimizer: torch.optim.O
     num_batches_per_epoch = sum(num_batches_per_epoch_list)
     optimizer.zero_grad()
 
-    # 开始训练循环
     print('=======>')
     print(f'Start {epoch}')
 
@@ -326,7 +323,6 @@ def train_one_epoch(model: torch.nn.Module, data: dict, optimizer: torch.optim.O
             }
             metric_logger.update(**log_metrics)
 
-        # 对比
         else:
             _, features, _, tar_features = batch
             features = features.cuda(cfg.dist.gpu, non_blocking=True)
@@ -342,7 +338,6 @@ def train_one_epoch(model: torch.nn.Module, data: dict, optimizer: torch.optim.O
             loss_self = output['loss_self'].item()
             loss_cl = output['loss_cl'].item()
 
-            # 计算准确率
             acc = output['clip_acc'].item()
 
             temperature = model.module.logit_scale.item()

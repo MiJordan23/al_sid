@@ -1,7 +1,6 @@
 # encoding: utf-8
 """
-@author: Yingwu.XSW
-@date: 2022/3/9 下午6:35
+@date: 2022/3/9 6:35
 """
 import os
 import shutil

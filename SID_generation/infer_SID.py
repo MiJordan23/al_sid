@@ -8,10 +8,10 @@ from tqdm import tqdm
 
 from rqvae_embed.rqvae_clip import RQVAE_EMBED_CLIP
 
-prefix = '/mnt/workspace/xianming/DSI_generation/rqvae/'
+prefix = '/mnt/workspace/[Anony]/DSI_generation/rqvae/'
 
 gallery_path_dict = {
-    'i2v': '/mnt/workspace/xianming/DSI_generation/rqvae/train_data/i2v_d512/5kquery_50wgallery_i2v_d512.npz',
+    'i2v': '/mnt/workspace/[Anony]/DSI_generation/rqvae/train_data/i2v_d512/5kquery_50wgallery_i2v_d512.npz',
 }
 
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-AUTHOR  :selous
 DATE    :2025.9.2
 FUNC    :All-in-one script: Extend the tokenizer of Qwen2.5-0.5B (add C0-C65536) and perform full fine-tuning
 """
