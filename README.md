@@ -186,16 +186,16 @@ python infer_SID.py
    git clone repo_name
    cd repo_name/algr
    ```
-2. training scripts:
-    ```
+2. training scripts
+    ```sh
     python -m torch.distributed.launch --nnodes=1 --nproc_per_node=4 runner.py --config=config/t5base_3layer_tiny.json
     ```
-3. predict scripts:
-    ```
+3. predict scripts
+    ```sh
     python -m torch.distributed.launch --nnodes=1 --nproc_per_node=4 runner.py --config=config/generate_t5base_3layer_tiny.json
     ```
 4. calculate Hitrate:
-    ```
+    ```sh
     # nebula test: python calc_hr.py --dataset_name=/home/admin/.cache/huggingface/modules/datasets_modules/datasets/AL-GR--AL-GR-Tiny/25dea07242891a2d --nebula
     1. python calc_hr.py --item_sid_file=item_info/tiny_item_sid_final.csv --generate_file=logs/generate_t5base_3layer_tiny/output.jsonl
     2. python calc_hr.py --item_sid_file=item_info/tiny_item_sid_final.csv --generate_file=logs/generate_qwen2.5_05b_3layer_tiny/output.jsonl --decoder_only
