@@ -114,9 +114,8 @@ class LocalPredictWriter(PredictWriter):
         super().__init__(predict_output)
         self.output_dir = os.path.expanduser(predict_output["path"])
         self.mode = predict_output.get("mode", "overwrite")
-        self.cleanup = predict_output.get("cleanup", True)  # 删除临时分片文件
+        self.cleanup = predict_output.get("cleanup", True) 
 
-        # 初始化分布式状态
         if dist.is_available() and dist.is_initialized():
             self.world_size = dist.get_world_size()
             self.rank = dist.get_rank()
@@ -126,13 +125,10 @@ class LocalPredictWriter(PredictWriter):
             self.rank = 0
             self.is_master = True
 
-        # 创建输出目录
         os.makedirs(self.output_dir, exist_ok=True)
 
-        # 分片文件路径
         self.shard_path = os.path.join(self.output_dir, f"{self.SHARD_FILE_PREFIX}{self.rank:04d}.jsonl")
 
-        # 打开分片文件
         mode = 'w' if self.mode == "overwrite" else 'a'
         self.fp = open(self.shard_path, mode, encoding="utf-8")
         logger.info(f"Rank {self.rank} writing to shard: {self.shard_path}")
@@ -147,16 +143,13 @@ class LocalPredictWriter(PredictWriter):
             raise
 
     def close(self):
-        # 关闭当前分片
         if self.fp:
             self.fp.close()
             self.fp = None
 
-        # 所有进程都等待写完
         if dist.is_available() and dist.is_initialized():
-            dist.barrier()  # 确保所有分片已写完
+            dist.barrier() 
 
-        # 主进程负责合并
         if self.is_master:
             final_path = os.path.join(self.output_dir, self.FINAL_OUTPUT_FILENAME)
             if os.path.exists(final_path) and self.mode == "overwrite":
@@ -174,14 +167,12 @@ class LocalPredictWriter(PredictWriter):
                     with open(shard_file, "r", encoding="utf-8") as f:
                         for line in f:
                             final_fp.write(line)
-                    # 清理
                     if self.cleanup:
                         os.remove(shard_file)
                         logger.debug(f"Cleaned up shard: {shard_file}")
 
             logger.info(f"Merge completed. Final output: {final_path}")
 
-        # 再次 barrier，确保主进程合并完成后再退出
         if dist.is_available() and dist.is_initialized():
             dist.barrier()
 

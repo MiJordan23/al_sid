@@ -14,7 +14,6 @@ class T5DataProcess:
         self.training_mode = custom_args.training_mode #training_mode
 
     def __call__(self, example: Dict[str, Any]) -> Dict[str, List[int]]:
-        # 提取字段
         input_text = example.get(self.input_column, "").strip()
         output_text = example.get(self.output_column, "").strip()
         source_text = input_text

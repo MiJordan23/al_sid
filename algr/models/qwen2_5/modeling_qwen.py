@@ -921,7 +921,6 @@ class Qwen2ForCausalLM(Qwen2PreTrainedModel, GenerationMixin):
             dynamic_beams = [[num_beams, beams_to_keep], [2 * num_beams, 2 * beams_to_keep],
                             [4 * num_beams, 4 * beams_to_keep], [8 * num_beams, 8 * beams_to_keep]]
         else:
-            ## 支持和线上保持一致
             dynamic_beams = [[num_beams, beams_to_keep], [2 * num_beams, 3 * beams_to_keep],
                             [4 * num_beams, 4 * beams_to_keep], [8 * num_beams, 8 * beams_to_keep]]
 
@@ -1259,12 +1258,8 @@ class Qwen2ForCausalLM(Qwen2PreTrainedModel, GenerationMixin):
             attentions=outputs.attentions,
         )
 
-    ## lm_head 优化
+    ## lm_head optimization
     def min_first_non_neg_index(self, labels: torch.Tensor) -> int:
-        """
-        labels : (B, N) 的 int Tensor，里面包含 -100 和非负数。
-        返回    : 所有行中第一个非负数的索引的最小值。
-        """
         tmp = (labels >= 0).cumsum(dim=-1)
         first_non_neg = (tmp==1).float().argmax(dim=-1).min().item()
         return first_non_neg

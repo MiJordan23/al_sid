@@ -60,7 +60,7 @@ class QwenDataProcess:
         IM_START, IM_END, NL = "<|im_start|>", "<|im_end|>", "\n"
         im_start = self.tokenizer(IM_START).input_ids
         im_end = self.tokenizer(IM_END).input_ids
-        nl_tokens = self.tokenizer(NL).input_ids ## 换行符
+        nl_tokens = self.tokenizer(NL).input_ids
         _system = self.tokenizer('system').input_ids + nl_tokens
         _user = self.tokenizer('user').input_ids + nl_tokens
         _assistant = self.tokenizer('assistant').input_ids + nl_tokens

@@ -98,7 +98,6 @@ class GRSTrainer(Seq2SeqTrainer):
                 else:
                     trace_dict["_generated_tokens_"] = generated_tokens
 
-            # 去掉input_ids
             if "_generated_new_tokens_" in output_columns:
                 generated_new_tokens = generated_tokens[:, inputs["input_ids"].size(-1):]
                 if batch_size != generated_new_tokens.shape[0]:
@@ -113,7 +112,6 @@ class GRSTrainer(Seq2SeqTrainer):
                     generated_text = np.array(generated_text).reshape([batch_size, -1]).tolist()
                 trace_dict["_generated_text_"] = generated_text
 
-            # 去掉input_ids
             if not output_columns or "_generated_new_text_" in output_columns:
                 generated_new_tokens = generated_tokens[:, inputs["input_ids"].size(-1): ]
                 generated_new_text = self.processing_class.batch_decode(generated_new_tokens, skip_special_tokens=self.predict_output.get("skip_special_tokens", True))
@@ -133,5 +131,4 @@ class GRSTrainer(Seq2SeqTrainer):
         self.predict_writer.write(trace_dict)
         if self.compute_metrics is not None:
             return results
-        # 避免gather和占用显存
         return None, None, None

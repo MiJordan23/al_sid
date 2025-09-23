@@ -199,11 +199,6 @@ def all_reduce_mean(x):
 
 
 def all_reduce_mean_batch(args):
-    """
-    对输入的多个变量（张量）进行全局均值汇聚
-    :param args: 多个输入变量，可以是一个或多个张量
-    :return: 每个输入变量的全局均值
-    """
     world_size = get_world_size()
     results = []
 

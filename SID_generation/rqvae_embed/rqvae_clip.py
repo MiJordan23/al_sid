@@ -91,7 +91,6 @@ class RQVAE_EMBED_CLIP(nn.Module):
         return loss['loss_total'] + loss_unique, out, selected_index, loss_dict, feature_norm, quant_norm
 
     def add_random_perturbation(self, original, sigma=0.001):
-        """对向量数组进行正态分布的随机扰动"""
         noise = torch.randn(original.size(), device=original.device) * sigma
         return original + noise
 
