@@ -308,11 +308,14 @@ Distributed under the project_license. See `LICENSE.txt` for more information.
 Please cite the following paper if you find our code helpful.
 
 ```
-@inproceedings{forge2026,
-  title={FORGE: Forming Semantic Identifiers for Generative Retrieval in Industrial Datasets},
-  author={Kairui Fu, Tao Zhang, Shuwen Xiao and et.al},
-  booktitle={{Submit to ICLR}},
-  year={2026}
+@misc{fu2025forge,
+      title={FORGE: Forming Semantic Identifiers for Generative Retrieval in Industrial Datasets}, 
+      author={Kairui Fu and Tao Zhang and Shuwen Xiao and Ziyang Wang and Xinming Zhang and Chenchi Zhang and Yuliang Yan and Junjun Zheng and Yu Li and Zhihong Chen and Jian Wu and Xiangheng Kong and Shengyu Zhang and Kun Kuang and Yuning Jiang and Bo Zheng},
+      year={2025},
+      eprint={2509.20904},
+      archivePrefix={arXiv},
+      primaryClass={cs.IR},
+      url={https://arxiv.org/abs/2509.20904}, 
 }
 ```
 
