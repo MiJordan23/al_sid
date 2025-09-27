@@ -136,8 +136,8 @@ This is an example of how to list things you need to use the software and how to
 ### Dataset Decription(Demo)
 1. For SID Generation Task:
 ```bash
-wget -P datas/ https://mvap-public-data.oss-cn-zhangjiakou.aliyuncs.com/yingwu_data/ICLR_2026_data/reconstruct_data_mask.npz
-wget -P datas/ https://mvap-public-data.oss-cn-zhangjiakou.aliyuncs.com/yingwu_data/ICLR_2026_data/contrastive_data_mask.npz
+wget -P datas/ https://mvap-public-data.oss-cn-zhangjiakou.aliyuncs.com/ICLR_2026_data/reconstruct_data_mask.npz
+wget -P datas/ https://mvap-public-data.oss-cn-zhangjiakou.aliyuncs.com/ICLR_2026_data/contrastive_data_mask.npz
 ```
 
 Dataset Preview:
