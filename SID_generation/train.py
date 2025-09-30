@@ -222,6 +222,7 @@ def main():
                 'epoch': epoch,
                 'cfg': OmegaConf.to_container(cfg),
             }
+            torch.save(checkpoint_save_info, os.path.join(cfg.output_dir, f'checkpoint-{epoch}.pth'))
 
         print('*' * 100)
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
