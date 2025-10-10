@@ -23,10 +23,14 @@
    ```
 
 ## 数据准备
+除了使用 `wget` 命令下载，你也可以直接从 Hugging Face 上的 `AL-GR/Item-EMB` 数据集中获取这些文件。
+数据集链接：[https://huggingface.co/datasets/AL-GR/Item-EMB](https://huggingface.co/datasets/AL-GR/Item-EMB)
+
    ```bash
    wget -P datas/ https://mvap-public-data.oss-cn-zhangjiakou.aliyuncs.com/ICLR_2026_data/reconstruct_data_mask.npz
    wget -P datas/ https://mvap-public-data.oss-cn-zhangjiakou.aliyuncs.com/ICLR_2026_data/contrastive_data_mask.npz
    ```
+
 
 ## 训练模型
 使用以下命令启动分布式训练：
