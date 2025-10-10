@@ -21,8 +21,8 @@ This project implements the RQVAE (Residual Quantized Variational Autoencoder) m
 
 ## Data Preparation
    ```bash
-   wget -P datas/ https://mvap-public-data.oss-cn-zhangjiakou.aliyuncs.com/yingwu_data/ICLR_2026_data/reconstruct_data_mask.npz
-   wget -P datas/ https://mvap-public-data.oss-cn-zhangjiakou.aliyuncs.com/yingwu_data/ICLR_2026_data/contrastive_data_mask.npz
+   wget -P datas/ https://mvap-public-data.oss-cn-zhangjiakou.aliyuncs.com/ICLR_2026_data/reconstruct_data_mask.npz
+   wget -P datas/ https://mvap-public-data.oss-cn-zhangjiakou.aliyuncs.com/ICLR_2026_data/contrastive_data_mask.npz
    ```
 
 ## Training the Model
