@@ -28,7 +28,7 @@ model:
   loss_type: 'mse'
   shared_codebook: False
   restart_unused_codes: True
-  VQ_ema: True
+  VQ_ema: False
   decay: 0.99
   pretrained_codebook: ''
   contrastive: ''
