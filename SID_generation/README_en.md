@@ -20,10 +20,13 @@ This project implements the RQVAE (Residual Quantized Variational Autoencoder) m
    ```
 
 ## Data Preparation
+In addition to downloading with the `wget` command, you can also obtain these files directly from the `AL-GR/Item-EMB` dataset on Hugging Face.
+Dataset link: [https://huggingface.co/datasets/AL-GR/Item-EMB](https://huggingface.co/datasets/AL-GR/Item-EMB)
    ```bash
    wget -P datas/ https://mvap-public-data.oss-cn-zhangjiakou.aliyuncs.com/ICLR_2026_data/reconstruct_data_mask.npz
    wget -P datas/ https://mvap-public-data.oss-cn-zhangjiakou.aliyuncs.com/ICLR_2026_data/contrastive_data_mask.npz
    ```
+
 
 ## Training the Model
 To start distributed training, use the following command:
