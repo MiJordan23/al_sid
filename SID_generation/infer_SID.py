@@ -1,255 +1,220 @@
-import os
-from collections import defaultdict
+import base64
+import csv
+import logging
+from typing import List, Tuple
 
-import hnswlib
 import numpy as np
+import pandas as pd
 import torch
 from tqdm import tqdm
 
 from rqvae_embed.rqvae_clip import RQVAE_EMBED_CLIP
 
-prefix = '/mnt/workspace/xianming/DSI_generation/rqvae/'
+# --- 配置日志 ---
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-gallery_path_dict = {
-    'i2v': '/mnt/workspace/xianming/DSI_generation/rqvae/train_data/i2v_d512/5kquery_50wgallery_i2v_d512.npz',
-}
-
-
-def read(gallery_path):
-    # query
-    with open(prefix + 'eval_data/query_gulnew5k_0930.txt', 'r') as f1:
-        querys = f1.readlines()
-        querys = [q.strip().split('||$$||') for q in querys]
-
-    # gallery
-    if gallery_path.endswith('.npz'):
-        data = np.load(gallery_path)
-        g_ids = data['ids']
-        g_embs = data['embeds']
-        print(g_ids.shape, g_embs.shape)
-    else:
-        g_ids = np.load(f"{gallery_path}_ids.npy")
-        g_embs = np.load(f"{gallery_path}_embs.npy").astype(np.float32)
-        print(g_ids.shape, g_embs.shape)
-
-    g_id2emb = {}
-    for iid, emb in zip(g_ids, g_embs):
-        g_id2emb[iid] = emb
-
-    return g_ids, g_embs, g_id2emb, querys
+# --- 全局常量和配置 ---
+CKPT_PATH = 'output_model/checkpoint-7.pth'  # todo
+INPUT_FILE_PATH = './item_feature/final/part_01.csv'  # todo
+OUTPUT_FILE_PATH = 'inference_results_batch.csv'  # todo
+CHUNK_SIZE = 5000  # pandas每次读取的行数
+BATCH_SIZE = 128  # 模型批次推理的样本数
+INPUT_EMBEDDING_COL = 'feature'  # 输入文件中embedding列的名称
+INPUT_ID_COL = 'item_id'  # 输入文件中ID列的名称
+EXPECTED_EMBEDDING_DIM = 512
 
 
-def extract(model, g_embs, g_ids):
-    span = 512
-    rqvae_output = []
-    rq_vae_index = []
-    device = next(model.parameters()).device
-    for idx in range(0, len(g_embs), span):
-        t = torch.from_numpy(g_embs[idx:idx + span])
-        index = model.rq_model.get_codes(t.to(device))
-        output = model.get_decode_feature(t.to(device))
-        # output = model.rq_model.quantizer.embed_code(index)
-        output = output.detach().cpu().numpy()
-        rqvae_output.append(output)
-        rq_vae_index.append(index.cpu().numpy())
-    rqvae_output = np.concatenate(rqvae_output, axis=0)
-    print('rqvae output shape: ', rqvae_output.shape)
-    rqvae_output = rqvae_output / np.linalg.norm(rqvae_output, axis=1, keepdims=True)
-
-    # rqvae_output = g_embs
-
-    rqvae_output = rqvae_output / np.linalg.norm(rqvae_output, axis=1, keepdims=True)
-    g_id2emb_vqvae = {}
-    for iid, emb in zip(g_ids, rqvae_output):
-        g_id2emb_vqvae[iid] = emb
-
-    return rqvae_output, g_id2emb_vqvae
-
-
-def cal2_hnsw(querys, g_id2emb_rqvae, rqvae_output, g_ids):
-    # query2 calc hitrate
-    all_num = 0.0
-    hit_num = 0.0
-    k = 31
-
-    dim = rqvae_output.shape[-1]
-    num_elements = 5000000  
-    assert num_elements > rqvae_output.shape[0]
-
-    # build HNSW index
-    p = hnswlib.Index(space='ip', dim=dim)
-    p.init_index(max_elements=num_elements, ef_construction=256, M=16)
-    p.set_ef(50)  # setting ef
-    ids = np.arange(num_elements)
-    p.add_items(rqvae_output, g_ids)
-
-    unique_qids = set()
-    for _, _, _, session_item_list in querys:
-        # for _, session_item_list, _, _ in tqdm(querys):
-        unique_qids.update([int(i) for i in session_item_list.split(',') if int(i) in g_id2emb_rqvae])
-
-    unique_qids = list(unique_qids)
-    qid_fea = np.array([g_id2emb_rqvae[id] for id in unique_qids])
-    retrieve_item_ids_unique = defaultdict(set)
-
-    span = 1000
-    for i in range(0, len(unique_qids), span):
-        topk_ids, sorted_top30_values = p.knn_query(qid_fea[i:i + span], k=k)
-
-        for rids, j in zip(topk_ids, list(range(i, min(i + span, len(unique_qids))))):
-            rids = [iid for iid in rids if iid != unique_qids[j]][:k - 1]  # except itself
-            retrieve_item_ids_unique[unique_qids[j]].update(rids)
-
-    all_num, hit_num = 0, 0
-    for sess_id, label, target, session_item_list in tqdm(querys[:]):
-        # for sess_id, session_item_list, target, label in tqdm(querys):
-        if int(target) not in g_id2emb_rqvae:
-            continue
-        if float(label) == 1.0:
-            session_item_list = [int(i) for i in session_item_list.split(',') if int(i) in g_id2emb_rqvae]
-            for id in session_item_list:
-                if int(target) in retrieve_item_ids_unique[id]:
-                    hit_num += 1
-                    break
-            if session_item_list:
-                all_num += 1
-    print(hit_num, all_num, hit_num / all_num * 100)
-    return hit_num, all_num, hit_num / all_num * 100
-
-
-def cal2(querys, g_id2emb_rqvae, rqvae_output, g_ids):
-    # query2 calc hitrate
-    all_num = 0.0
-    hit_num = 0.0
-    k = 31
-
-    unique_qids = set()
-    for _, _, _, session_item_list in tqdm(querys):
-        # for _, session_item_list, _, _ in tqdm(querys):
-        unique_qids.update([int(i) for i in session_item_list.split(',') if int(i) in g_id2emb_rqvae])
-
-    unique_qids = list(unique_qids)
-    qid_fea = np.array([g_id2emb_rqvae[id] for id in unique_qids])
-    print('unque qid fea shape: ', qid_fea.shape)
-    retrieve_item_ids_unique = defaultdict(set)
-
-    span = 500
-    for i in tqdm(range(0, len(unique_qids), span)):
-        sim = qid_fea[i:i + span] @ rqvae_output.T
-        # top30
-        top30_indices = np.argpartition(sim, -k, axis=1)[:, -k:]
-        top30_values = np.take_along_axis(sim, top30_indices, axis=1)
-        sorted_order = np.argsort(-top30_values, axis=1)
-        sorted_top30_indices = np.take_along_axis(top30_indices, sorted_order, axis=1)
-        # sorted_top30_values = np.take_along_axis(top30_values, sorted_order, axis=1)
-        sorted_item_id_tmp = g_ids[sorted_top30_indices]
-        for rids, j in zip(sorted_item_id_tmp, list(range(i, min(i + span, len(unique_qids))))):
-            rids = [iid for iid in rids if iid != unique_qids[j]][:k - 1]  # 不召回自己
-            retrieve_item_ids_unique[unique_qids[j]].update(rids)
-
-    all_num, hit_num = 0, 0
-    for sess_id, label, target, session_item_list in tqdm(querys[:]):
-        # for sess_id, session_item_list, target, label in tqdm(querys):
-        if float(label) == 1.0:
-            session_item_list = [int(i) for i in session_item_list.split(',') if int(i) in g_id2emb_rqvae]
-            for id in session_item_list:
-                if int(target) in retrieve_item_ids_unique[id]:
-                    hit_num += 1
-                    break
-            if session_item_list:
-                all_num += 1
-    print(hit_num, all_num, hit_num / all_num * 100)
-    return hit_num, all_num, hit_num / all_num * 100
-
-
-def calculate_metric2(model, g_ids, g_embs, g_id2emb, querys):
-    rqvae_output, g_id2emb_rqvae = extract(model, g_embs, g_ids)
-    hitrates = []
-    for _ in range(3):
-        hit_num, all_num, hitrate = cal2_hnsw(querys, g_id2emb_rqvae, rqvae_output, g_ids)
-        hitrates.append(hitrate)
-    return hit_num, all_num, np.mean(hitrates)
-
-
-def test_model(model_path_list, model, all_emb_path=gallery_path_dict['80msideinfo']):
-    g_ids, g_embs, g_id2emb, querys = read(all_emb_path)
-
-    best_path, best_hitrate = '', -1.0
-    for model_path in model_path_list:
-        print(model_path)
-        state_dict = torch.load(model_path, map_location='cpu')
-        model.load_state_dict(state_dict['model'], strict=False)
-        try:
-            hit, all, hitrate = calculate_metric2(model, g_ids, g_embs, g_id2emb, querys)
-        except Exception as e:
-            print(e)
-            continue
-
-        print(hit, all, hitrate)
-
-        if hitrate > best_hitrate:
-            best_path = model_path
-            best_hitrate = hitrate
-            print('=' * 100)
-            print('best: ', best_hitrate, best_path)
-            print('=' * 100)
-    print('best: ', best_hitrate, best_path)
-    return best_hitrate, best_path
-
-
-def filter_existing_paths(model_path_list):
-    existing_paths = []
-    for path in model_path_list:
-        if os.path.exists(path):
-            existing_paths.append(path)
-    return existing_paths
-
-
-if __name__ == '__main__':
+def build_model(ckpt_path: str) -> torch.nn.Module:
+    """
+    构建并加载预训练的RQ-VAE模型。
+    """
+    logging.info("开始构建模型...")
     codebook_num = 3
-    codebook_size = 8192  # 8192 # [4096, 4096, 32768] # 48
-    codebook_dim = 64  # 64
+    codebook_size = 8192
+    codebook_dim = 64
     input_dim = 512
 
     hps = {
-        "bottleneck_type": "rq",
-        "embed_dim": codebook_dim,
-        "n_embed": codebook_size,
-        "latent_shape": [8, 8, codebook_dim],
-        "code_shape": [8, 8, codebook_num],
-        "shared_codebook": False,
-        "decay": 0.99,
-        "restart_unused_codes": True,
-        "loss_type": "cosine",
-        "latent_loss_weight": 0.15,
-        "masked_dropout": 0.0,
-        "use_padding_idx": False,
-        "VQ_ema": False,
-        "do_bn": True,
-        'rotation_trick': False
+        "bottleneck_type": "rq", "embed_dim": codebook_dim, "n_embed": codebook_size,
+        "latent_shape": [8, 8, codebook_dim], "code_shape": [8, 8, codebook_num],
+        "shared_codebook": False, "decay": 0.99, "restart_unused_codes": True,
+        "loss_type": "cosine", "latent_loss_weight": 0.15, "masked_dropout": 0.0,
+        "use_padding_idx": False, "VQ_ema": False, "do_bn": True, 'rotation_trick': False
     }
     ddconfig = {
-        "double_z": False,
-        "z_channels": codebook_dim,
-        "resolution": 256,
-        "in_channels": 3,
-        "out_ch": 3,
-        "ch": 128,
-        "ch_mult": [1, 1, 2, 2, 4, 4],
-        "num_res_blocks": 2,
-        "attn_resolutions": [8],
-        "dropout": 0.00,
-        "input_dim": input_dim
+        "double_z": False, "z_channels": codebook_dim, "resolution": 256, "in_channels": 3,
+        "out_ch": 3, "ch": 128, "ch_mult": [1, 1, 2, 2, 4, 4], "num_res_blocks": 2,
+        "attn_resolutions": [8], "dropout": 0.00, "input_dim": input_dim
     }
-    model = RQVAE_EMBED_CLIP(hps, ddconfig=ddconfig, checkpointing=True)
-    model = model.cuda()
-    model = model.eval()
 
-    # test data
+    try:
+        model = RQVAE_EMBED_CLIP(hps, ddconfig=ddconfig, checkpointing=True)
+        # 确定设备
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model.to(device)
+        model.eval()
 
-    model_path_list = [
-        prefix + f"ckpts/RQ_gmesideinfo_d512_3_8192_wd1e-4_initK_tongwosh_bs8192_lr0.008_ep150_20250826_214839/checkpoint-{i}.pth"
-        for i in list(range(149, 0, -10)) + [0]]
-    model_path_list = filter_existing_paths(model_path_list)
+        logging.info(f"正在从 '{ckpt_path}' 加载模型权重...")
+        state_dict = torch.load(ckpt_path, map_location=device)
+        model.load_state_dict(state_dict['model'], strict=False)
+        logging.info("模型加载成功！")
+        return model
+    except FileNotFoundError:
+        logging.error(f"模型检查点文件未找到: {ckpt_path}")
+        raise
+    except Exception as e:
+        logging.error(f"构建模型时发生未知错误: {e}")
+        raise
 
-    test_model(model_path_list, model, all_emb_path=gallery_path_dict['i2v'])
+
+def predict_batch(
+        model: torch.nn.Module,
+        item_ids_batch: List[str],
+        embeddings_batch: List[str]
+) -> List[Tuple[str, str]]:
+    """
+    对一个批次的数据进行解码和模型推理。
+
+    Args:
+        model: 已加载的 PyTorch 模型。
+        item_ids_batch: 批次的 item_id 列表。
+        embeddings_batch: 批次的 base64 编码的 embedding 字符串列表。
+
+    Returns:
+        一个包含 (item_id, SID) 元组的列表。
+    """
+    valid_item_ids = []
+    embedding_list = []
+
+    # 1. 解码Base64并过滤无效数据
+    for item_id, embedding_str in zip(item_ids_batch, embeddings_batch):
+        try:
+            embedding_np = np.frombuffer(base64.b64decode(embedding_str), dtype=np.float32)
+            if embedding_np.shape[0] != EXPECTED_EMBEDDING_DIM:
+                logging.warning(
+                    f"Item ID '{item_id}' 的 embedding 维度不正确。 "
+                    f"期望维度: {EXPECTED_EMBEDDING_DIM}, 实际维度: {embedding_np.shape[0]}。已跳过此样本。"
+                )
+                continue  # 跳过这个不符合规范的样本
+            embedding_list.append(embedding_np)
+            valid_item_ids.append(item_id)
+        except Exception as e:
+            logging.warning(f"Item ID '{item_id}' 在解码时发生错误: {e}。已跳过。")
+            continue
+
+    if not valid_item_ids:
+        return []
+
+    # 2. 转换为Tensor并进行推理 (在GPU上执行)
+    device = next(model.parameters()).device
+    embedding_tensor = torch.from_numpy(np.array(embedding_list)).to(device)
+
+    with torch.no_grad():
+        index_batch = model.rq_model.get_codes(embedding_tensor)
+
+    # 3. 将结果转换回CPU并格式化
+    cpu_indices = index_batch.cpu().numpy()
+
+    results = []
+    for item_id, index_row in zip(valid_item_ids, cpu_indices):
+        sid_str = ','.join(index_row.astype(str))
+        results.append((item_id, sid_str))
+
+    return results
+
+
+def process_file(
+        model: torch.nn.Module,
+        input_path: str,
+        output_path: str,
+        chunk_size: int,
+        batch_size: int
+):
+    """
+    主处理函数，读取CSV，分批推理，并写入结果。
+    """
+    try:
+        # 预先计算总行数以提供准确的进度条
+        logging.info("正在计算文件总行数...")
+        total_lines = sum(1 for _ in open(input_path, 'r', encoding='utf-8')) - 1
+        logging.info(f"文件 '{input_path}' 共有 {total_lines} 行数据。")
+    except FileNotFoundError:
+        logging.error(f"输入文件未找到: {input_path}")
+        return
+    except Exception as e:
+        logging.error(f"获取文件总行数时发生错误: {e}")
+        total_lines = None  # 即使失败也继续，只是进度条不显示百分比
+
+    # 使用 with 语句和 csv.writer 确保文件正确关闭和写入
+    with open(output_path, 'w', newline='', encoding='utf-8') as outfile:
+        writer = csv.writer(outfile)
+        writer.writerow(['item_id', 'SID'])
+
+        # 缓冲区，用于存储跨pandas chunk的数据
+        item_ids_buffer = []
+        embeddings_buffer = []
+
+        # 使用tqdm显示进度
+        with tqdm(total=total_lines, desc='Processing data') as pbar:
+            try:
+                # 迭代读取大文件块
+                for chunk in pd.read_csv(input_path, chunksize=chunk_size, encoding='utf-8'):
+                    # 过滤掉header行（如果存在于数据中）
+                    chunk = chunk[chunk[INPUT_EMBEDDING_COL] != INPUT_EMBEDDING_COL]
+                    if chunk.empty:
+                        continue
+
+                    item_ids_buffer.extend(chunk[INPUT_ID_COL].tolist())
+                    embeddings_buffer.extend(chunk[INPUT_EMBEDDING_COL].tolist())
+
+                    # 当缓冲区数据足够时，按批次处理
+                    while len(item_ids_buffer) >= batch_size:
+                        # 从缓冲区头部取出
+                        ids_to_process = item_ids_buffer[:batch_size]
+                        embs_to_process = embeddings_buffer[:batch_size]
+
+                        # 从缓冲区移除已取出的数据
+                        item_ids_buffer = item_ids_buffer[batch_size:]
+                        embeddings_buffer = embeddings_buffer[batch_size:]
+
+                        # 模型推理
+                        sid_results = predict_batch(model, ids_to_process, embs_to_process)
+
+                        # 写入结果
+                        if sid_results:
+                            writer.writerows(sid_results)
+
+                        pbar.update(len(ids_to_process))
+
+                # 处理剩余不足一个批次的数据
+                if item_ids_buffer:
+                    sid_results = predict_batch(model, item_ids_buffer, embeddings_buffer)
+                    if sid_results:
+                        writer.writerows(sid_results)
+                    pbar.update(len(item_ids_buffer))
+
+            except FileNotFoundError:
+                logging.error(f"输入文件未找到: {input_path}")
+            except KeyError as e:
+                logging.error(
+                    f"CSV文件中缺少预期的列: {e}。请检查是否存在 '{INPUT_ID_COL}' 和 '{INPUT_EMBEDDING_COL}' 列。")
+            except Exception as e:
+                logging.error(f"处理文件时发生未知错误: {e}", exc_info=True)
+
+    logging.info(f"推理完成，结果已保存到: {output_path}")
+
+
+def main():
+    """程序主入口"""
+    model = build_model(CKPT_PATH)
+    process_file(
+        model=model,
+        input_path=INPUT_FILE_PATH,
+        output_path=OUTPUT_FILE_PATH,
+        chunk_size=CHUNK_SIZE,
+        batch_size=BATCH_SIZE
+    )
+
+
+if __name__ == "__main__":
+    main()
