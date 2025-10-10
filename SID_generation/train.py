@@ -114,12 +114,12 @@ def prepare_optimizer_and_scheduler(config, model_without_ddp):
     """Prepare the optimizer and learning rate scheduler"""
     effective_batch_size = config.data.batch_size * config.train.accum_iter * dist_utils.get_world_size()
 
-    config.output_dir += f"{config.data.save_prefix}_ebs{effective_batch_size}_lr{config.train.lr}_ep{config.train.epochs}"
+    # config.output_dir += f"{config.data.save_prefix}_ebs{effective_batch_size}_lr{config.train.lr}_ep{config.train.epochs}"
 
     current_time = int(time.time())
     formatted_time = datetime.datetime.fromtimestamp(current_time).strftime('%Y%m%d_%H%M%S')
 
-    config.output_dir += f'_{formatted_time}'
+    # config.output_dir += f'_{formatted_time}'
 
     if config.train.lr is None:
         config.train.lr = config.train.blr * effective_batch_size / 256
@@ -154,12 +154,12 @@ def main():
     OmegaConf.set_readonly(cfg, False)
     current_timestamp_seconds = int(time.time())
     formatted_timestamp = datetime.datetime.fromtimestamp(current_timestamp_seconds).strftime('%Y%m%d_%H%M%S')
-    cfg.tmp_path += f"{cfg.data.save_prefix}_bs{cfg.data.batch_size}_lr{cfg.train.lr}_ep{cfg.train.epochs}_{formatted_timestamp}"
+    cfg.output_dir += f"{cfg.data.save_prefix}_bs{cfg.data.batch_size}_lr{cfg.train.lr}_ep{cfg.train.epochs}_{formatted_timestamp}"
 
     if dist_utils.get_rank() == 0 and not cfg.eval:
-        os.makedirs(cfg.tmp_path, exist_ok=True)
+        os.makedirs(cfg.output_dir, exist_ok=True)
         config_dict = OmegaConf.to_container(cfg, resolve=True)
-        with open(os.path.join(cfg.tmp_path, 'config.json'), 'w') as file_handle:
+        with open(os.path.join(cfg.output_dir, 'config.json'), 'w') as file_handle:
             json.dump(config_dict, file_handle, indent=4)
 
     # -----------------------------------------------------------------------------------------------
@@ -230,8 +230,8 @@ def main():
                      'n_parameters': number_of_trainable_params}
 
         if cfg.output_dir and dist_utils.is_main_process():
-            os.makedirs(cfg.tmp_path, exist_ok=True)
-            with open(os.path.join(cfg.tmp_path, "log.txt"), mode="a", encoding="utf-8") as f:
+            os.makedirs(cfg.output_dir, exist_ok=True)
+            with open(os.path.join(cfg.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
                 f.write(json.dumps(log_stats) + "\n")
 
     total_time = time.time() - start_time
