@@ -298,7 +298,7 @@ Distributed under the project_license. See `LICENSE.txt` for more information.
 
 <!-- CONTACT -->
 ## Contact
-
+If you have any questions or encounter difficulties, we welcome you to contact ours via [GitHub Issues](https://github.com/selous123/al_sid/issues). We aim to respond promptly and support you in quickly getting up and running with generative recommendation.
 <!-- Your Name - [@twitter_handle](https://twitter.com/twitter_handle) - email@email_client.com -->
 <!-- Project Link: [https://github.com/selous123/al_sid](https://github.com/selous123/al_sid) -->
 <!-- <p align="right">(<a href="#readme-top">back to top</a>)</p> -->
@@ -321,11 +321,11 @@ Please cite the following paper if you find our code helpful.
 
 
 <!-- ACKNOWLEDGMENTS -->
-## Acknowledgments
+<!-- ## Acknowledgments
 
 * []()
 * []()
-* []()
+* []() -->
 
 <!-- <p align="right">(<a href="#readme-top">back to top</a>)</p> -->
 
