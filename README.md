@@ -240,11 +240,11 @@ python infer_SID.py
 
 
 <!-- USAGE EXAMPLES -->
-## Usage
+<!-- ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
+Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources. -->
 
-_For more examples, please refer to the [Documentation]()_
+<!-- _For more examples, please refer to the [Documentation]()_ -->
 
 <!-- <p align="right">(<a href="#readme-top">back to top</a>)</p> -->
 
@@ -253,7 +253,7 @@ _For more examples, please refer to the [Documentation]()_
 <!-- ROADMAP -->
 ## Roadmap
 
-- [x] Generative Retrive Training
+- [x] Generative Retrieval Training
 - [x] SID Generation
 - [x] Data Processing
 
